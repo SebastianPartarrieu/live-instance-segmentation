@@ -1,2 +1,9 @@
-# live-kinect
-Perform live instance (person) segmentation using Kinectv2 sensors. Estimate distance of each person &amp; extract 3D point clouds.
+# Kinect live processing for industrial safety applications
+To help industrial adoption of low-cost sensors for safety applications, this package provides a proof-of-concept using the Kinectv2 sensor. 
+
+# Installation
+
+# Main results
+
+# Authors
+Emma Bou Hanna & Sebastian Partarrieu
