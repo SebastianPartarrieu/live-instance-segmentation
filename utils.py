@@ -96,7 +96,7 @@ class InstanceSegmentationVisualizer:
             image = cv2.rectangle(image, top_left, bottom_right, color, 2)
         return image
 
-    def overlay_labels(self, image, boxes, classes, scores, dist=None, texts=None):
+    def overlay_labels(self, image, boxes, classes, scores, dist=[], texts=None):
         if texts:
             labels = texts
         elif self.labels:
@@ -104,18 +104,14 @@ class InstanceSegmentationVisualizer:
         else:
             raise RuntimeError('InstanceSegmentationVisualizer must contain either labels or texts to display')
         
-        if len(dist) >= 1:
-            template = '{}: {:.2f}, {}:{:.3f}' if self.show_scores else '{}'
+        template = '{}: {:.2f}, {}:{}' if self.show_scores else '{}'
+        if len(dist) != len(boxes):
+            dist_plot = ["?"]*len(boxes)
         else:
-            template = '{}: {:.2f}' if self.show_scores else '{}'
+            dist_plot = dist
         
-        count = 0
-        for box, score, label in zip(boxes, scores, labels):
-            if len(dist) >= 1:
-                text = template.format(label, score, "distance", dist[count])
-                count += 1
-            else:
-                text = template.format(label, score)
+        for box, score, label, dist_ in zip(boxes, scores, labels, dist_plot):
+            text = template.format(label, score, "distance", dist_)
             textsize = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)[0]
             position = ((box[:2] + box[2:] - textsize) / 2).astype(np.int32)
             cv2.putText(image, text, position, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)

@@ -5,12 +5,15 @@ import cv2
 import os
 from utils import *
 import time
-from freenect2 import Device, FrameType
+from freenect2 import Device, FrameType, Frame, FrameFormat
 
 def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frames=0):
     device = None
+    original_width = None
+    original_height = None
     video_frames = []
     masks = None
+    frame = None
     dist = []
     
     try:
@@ -36,7 +39,9 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
                 break
                 
             if type_ == FrameType.Color:
+                frame_rgb = frame_
                 frame = frame_.to_array().astype(np.uint8, copy=True)[:,:,0:3]
+                original_width, original_height = frame.shape[1], frame.shape[0]
 
                 # If the frame is larger than full HD, reduce size to improve the performance.
                 scale = 1280 / max(frame.shape)
@@ -49,7 +54,7 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
                         interpolation=cv2.INTER_AREA,
                     )
                     
-                cv2.resize(src=frame, dsize=(640, 480), interpolation=cv2.INTER_AREA, dst=frame)
+                # cv2.resize(src=frame, dsize=(640, 480), interpolation=cv2.INTER_AREA, dst=frame)
 
                 # Resize the image and change dims to fit neural network input.
                 input_img = cv2.resize(
@@ -110,16 +115,38 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
                     display.clear_output(wait=True)
                     display.display(i)
                 
-                del frame
                     
             elif type_ == FrameType.Depth:
                 t1 = time.time()
-                if t1 - t0 > 1:
-                    frame_depth = frame_.to_array().astype(float)
-                    cv2.resize(src=frame_depth, dsize=(640, 480), interpolation=cv2.INTER_AREA, dst=frame_depth)
+                if (t1 - t0 > 1):
+                    _, _, frame_depth = device.registration.apply(frame_rgb, frame_, with_big_depth=True)
+                    frame_depth = frame_depth.to_array()[1:-1, :]
+                    frame_depth[frame_depth <= 0] = 0.
+                    frame_depth[frame_depth > 2e4] = 0.
+                    frame_depth = np.nan_to_num(frame_depth, posinf=0., neginf=0., nan=0.)
+                    print(frame_depth[frame_depth != 0.])
+
+                    if scale < 1:
+                        frame_depth = cv2.resize(
+                            src=frame_depth,
+                            dsize=None,
+                            fx=scale,
+                            fy=scale,
+                            interpolation=cv2.INTER_AREA,
+                        )
                     # list of distances for each mask
-                    dist = get_distance_to_humans(frame_depth, masks)
-                    del frame_depth
+                    dist = []
+                    for mask in masks:
+                        frame_depth = cv2.bitwise_and(frame_depth, frame_depth, mask=mask)
+                        dist_ = np.nansum(frame_depth)/((frame_depth!=0.).sum())
+                        if np.isnan(dist_):
+                            dist.append('?')
+                        else:
+                            dist.append(np.round(dist_/1000., 3))
+                    
+                    # dist = get_distance_to_humans(frame_depth, masks)
+                    print(dist)
+                    # del frame_depth
                     t0 = time.time()
 
                 
