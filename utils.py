@@ -182,9 +182,3 @@ def process_results(frame, input_img, results, thresh=0.6):
         masks.append(postprocess_mask(box, results_masks[i], h, w))
 
     return labels, scores, boxes, masks
-
-def get_distance_to_humans(frame, masks):
-    dist_list = []
-    for mask in masks:
-        dist_list.append((np.mean(frame[mask])/1000).round(3))
-    return dist_list
