@@ -33,7 +33,7 @@ while True:
         break
 
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-out = cv2.VideoWriter(path_save + 'test_kinect.mp4', fourcc, 5.0, (video_save[0].shape[0], video_save[0].shape[1]))
+out = cv2.VideoWriter(path_save + 'test_kinect.mp4', fourcc, 5.0, (video_save[0].shape[1], video_save[0].shape[0]))
 print(video_save[0].shape)
 for i in range(len(video_save)):
     out.write(video_save[i])
