@@ -18,16 +18,13 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
     dist = []
 
     vis = o3d.visualization.Visualizer()
-    vis.create_window(height=720, width=1280)
-    pcl = o3d.geometry.PointCloud()
-    pcl.points = o3d.utility.Vector3dVector(np.zeros((1,3)))
-    vis.add_geometry(pcl)
-
-    params_o3d = o3d.camera.PinholeCameraIntrinsic(o3d.camera.PinholeCameraIntrinsicParameters.Kinect2ColorCameraDefault)
+    vis.create_window(height=480, width=640)
     
     try:
         device = Device()
         device.start()     
+        params_camera = device.color_camera_params
+        params_o3d = o3d.camera.PinholeCameraIntrinsic()
         
         if use_popup:
             title = "Press ESC to Exit"
@@ -40,7 +37,6 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
         
         # init count depth
         t0 = time.time()
-        t2 = time.time()
         while True:            
             # Grab the frame.
             type_, frame_ = device.get_next_frame()
@@ -51,7 +47,6 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
             if type_ == FrameType.Color:
                 frame_rgb = frame_
                 frame = frame_.to_array().astype(np.uint8, copy=True)[:,:,0:3]
-                original_width, original_height = frame.shape[1], frame.shape[0]
 
                 # If the frame is larger than full HD, reduce size to improve the performance.
                 scale = 1280 / max(frame.shape)
@@ -144,17 +139,27 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
                         )
                     # list of distances for each mask
                     dist = []
+                    frame_humans = np.zeros(frame_depth.shape)
                     for mask in masks:
-                        frame_depth = cv2.bitwise_and(frame_depth, frame_depth, mask=mask)
-                        dist_ = np.nansum(frame_depth)/((frame_depth!=0.).sum())
+                        frame_depth_ = cv2.bitwise_and(frame_depth, frame_depth, mask=mask)
+                        dist_ = np.nansum(frame_depth_)/((frame_depth_!=0.).sum())
                         if np.isnan(dist_):
                             dist.append('?')
                         else:
-                            dist.append(np.round(dist_/1000., 3))                    
+                            dist.append(np.round(dist_/1000., 3))
+                                                
+                        frame_humans += frame_depth_
 
-                    vis.remove_geometry(pcl)
+
+                    params_o3d.set_intrinsics(width=frame.shape[1], 
+                                             height=frame.shape[0],
+                                             fx=params_camera.fx, 
+                                             fy=params_camera.fy, 
+                                             cx=params_camera.cx,
+                                             cy=params_camera.cy)
+                    vis.clear_geometries()
                     rgb_o3d = o3d.geometry.Image(frame)
-                    depth_o3d = o3d.geometry.Image(frame_depth)
+                    depth_o3d = o3d.geometry.Image(frame_humans.astype(np.float32))
                     rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(rgb_o3d, depth_o3d, convert_rgb_to_intensity=False)
                     pcl = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, params_o3d)
                     vis.add_geometry(pcl)
