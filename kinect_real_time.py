@@ -158,6 +158,7 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
                             dist.append(np.round(dist_/1000., 3))
                                                 
                         frame_humans += frame_depth_
+                    
 
 
                     params_o3d.set_intrinsics(width=frame.shape[1], 
@@ -177,7 +178,6 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
                     t0 = time.time()
 
                    
-
 
 
                 
@@ -233,6 +233,7 @@ classes = [
     "toaster", "sink", "refrigerator", "blender", "book", "clock", "vase", "scissors",
     "teddy bear", "hair drier", "toothbrush", "hair brush"
 ]
+
 video_frames = run_object_detection(source=0, flip=True, use_popup=True)
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 out = cv2.VideoWriter('test_kinect_script.mp4', fourcc, 5, (video_frames[0].shape[1], video_frames[0].shape[0]))
