@@ -19,7 +19,10 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
     pcls = []
 
     vis = o3d.visualization.Visualizer()
-    vis.create_window(height=480, width=640)
+    vis.create_window(width=960, height=540)
+    render = vis.get_render_option()
+    render.background_color = [0,0,0]
+    render.point_size = 1
 
     try:
         device = Device()
@@ -77,6 +80,7 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
                 stop_time = time.time()
                 # Get network outputs
                 labels, scores, boxes, masks = process_results(frame=frame, input_img=input_img, results=results)
+                frame_raw = frame.copy()
                 # visualize
                 frame = visualizer(frame, boxes, labels, scores, masks, dist, None, None)
 
@@ -123,7 +127,7 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
                     
             elif type_ == FrameType.Depth:
                 t1 = time.time()
-                if (t1 - t0 > 1):
+                if (t1 - t0 > .3):
                     _, _, frame_depth = device.registration.apply(frame_rgb, frame_, with_big_depth=True)
                     frame_depth = frame_depth.to_array()[1:-1, :]
                     frame_depth[frame_depth <= 0] = 0.
@@ -160,7 +164,7 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
                                              cx=params_camera.cx,
                                              cy=params_camera.cy)
                     vis.clear_geometries()
-                    rgb_o3d = o3d.geometry.Image(frame)
+                    rgb_o3d = o3d.geometry.Image(frame_raw)
                     depth_o3d = o3d.geometry.Image(frame_humans.astype(np.float32))
                     rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(rgb_o3d, depth_o3d, convert_rgb_to_intensity=False)
                     pcl = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, params_o3d)
@@ -169,7 +173,7 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
                     vis.add_geometry(pcl)
 
                     ctr = vis.get_view_control()
-                    ctr.set_zoom(0.3)
+                    ctr.set_zoom(0.45)
 
                     vis.poll_events()
                     vis.update_renderer()
@@ -236,11 +240,11 @@ video_frames, pcls = run_object_detection(source=0, flip=True, use_popup=True)
 
 ## save video
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-out = cv2.VideoWriter('./videos/kinect_realtime_demo_pc.mp4', fourcc, 10, (video_frames[0].shape[1], video_frames[0].shape[0]))
+out = cv2.VideoWriter('./videos/kinect_realtime_demo_3.mp4', fourcc, 10, (video_frames[0].shape[1], video_frames[0].shape[0]))
 for i in range(len(video_frames)):
     out.write(video_frames[i])
 out.release()
 
 ## save pointclouds
 for i, pcl in enumerate(pcls):
-    o3d.io.write_point_cloud(f'./pointclouds/frame{i}.pcd', pcl)
+    o3d.io.write_point_cloud(f'./pointclouds3/frame{i}.pcd', pcl)
