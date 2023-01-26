@@ -16,6 +16,7 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
     masks = None
     frame = None
     dist = []
+    pcls = []
 
     vis = o3d.visualization.Visualizer()
     vis.create_window(height=480, width=640)
@@ -163,13 +164,20 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
                     depth_o3d = o3d.geometry.Image(frame_humans.astype(np.float32))
                     rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(rgb_o3d, depth_o3d, convert_rgb_to_intensity=False)
                     pcl = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, params_o3d)
+                    pcl.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
+                    pcl, ind = pcl.remove_statistical_outlier(10, 1)
+                    #pcl = pcl.select_by_index(ind)
                     vis.add_geometry(pcl)
+
+                    ctr = vis.get_view_control()
+                    ctr.set_zoom(0.3)
+
                     vis.poll_events()
                     vis.update_renderer()
+                    pcls.append(pcl)
+
                     t0 = time.time()
 
-
-                
 
     # ctrl-c
     except KeyboardInterrupt:
@@ -186,7 +194,7 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
             vis.destroy_window()
         if use_popup:
             cv2.destroyAllWindows()
-        return video_frames
+        return video_frames, pcls
 
 # Define path to models
 base_model_dir = "models/model-segmentation"
@@ -223,9 +231,15 @@ classes = [
     "teddy bear", "hair drier", "toothbrush", "hair brush"
 ]
 
-video_frames = run_object_detection(source=0, flip=True, use_popup=True)
+video_frames, pcls = run_object_detection(source=0, flip=True, use_popup=True)
+
+## save video
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-out = cv2.VideoWriter('test_kinect_script.mp4', fourcc, 5, (video_frames[0].shape[1], video_frames[0].shape[0]))
+out = cv2.VideoWriter('./videos/kinect_realtime_demo_pc.mp4', fourcc, 10, (video_frames[0].shape[1], video_frames[0].shape[0]))
 for i in range(len(video_frames)):
     out.write(video_frames[i])
 out.release()
+
+## save pointclouds
+for i, pcl in enumerate(pcls):
+    o3d.io.write_point_cloud(f'./pointclouds/frame{i}.pcd', pcl)
