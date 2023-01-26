@@ -5,17 +5,26 @@ import cv2
 import os
 from utils import *
 import time
-from freenect2 import Device, FrameType
+from freenect2 import Device, FrameType, Frame, FrameFormat
+import open3d as o3d
 
 def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frames=0):
     device = None
+    original_width = None
+    original_height = None
     video_frames = []
     masks = None
+    frame = None
     dist = []
+
+    vis = o3d.visualization.Visualizer()
+    vis.create_window(height=480, width=640)
     
     try:
         device = Device()
-        device.start()        
+        device.start()     
+        params_camera = device.color_camera_params
+        params_o3d = o3d.camera.PinholeCameraIntrinsic()
         
         if use_popup:
             title = "Press ESC to Exit"
@@ -36,6 +45,7 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
                 break
                 
             if type_ == FrameType.Color:
+                frame_rgb = frame_
                 frame = frame_.to_array().astype(np.uint8, copy=True)[:,:,0:3]
 
                 # If the frame is larger than full HD, reduce size to improve the performance.
@@ -49,7 +59,6 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
                         interpolation=cv2.INTER_AREA,
                     )
                     
-                cv2.resize(src=frame, dsize=(640, 480), interpolation=cv2.INTER_AREA, dst=frame)
 
                 # Resize the image and change dims to fit neural network input.
                 input_img = cv2.resize(
@@ -110,17 +119,55 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
                     display.clear_output(wait=True)
                     display.display(i)
                 
-                del frame
                     
             elif type_ == FrameType.Depth:
                 t1 = time.time()
-                if t1 - t0 > 1:
-                    frame_depth = frame_.to_array().astype(float)
-                    cv2.resize(src=frame_depth, dsize=(640, 480), interpolation=cv2.INTER_AREA, dst=frame_depth)
+                if (t1 - t0 > 1):
+                    _, _, frame_depth = device.registration.apply(frame_rgb, frame_, with_big_depth=True)
+                    frame_depth = frame_depth.to_array()[1:-1, :]
+                    frame_depth[frame_depth <= 0] = 0.
+                    frame_depth[frame_depth > 2e4] = 0.
+                    frame_depth = np.nan_to_num(frame_depth, posinf=0., neginf=0., nan=0.)
+
+                    if scale < 1:
+                        frame_depth = cv2.resize(
+                            src=frame_depth,
+                            dsize=None,
+                            fx=scale,
+                            fy=scale,
+                            interpolation=cv2.INTER_AREA,
+                        )
                     # list of distances for each mask
-                    dist = get_distance_to_humans(frame_depth, masks)
-                    del frame_depth
+                    dist = []
+                    frame_humans = np.zeros(frame_depth.shape)
+                    for mask in masks:
+                        frame_depth_ = cv2.bitwise_and(frame_depth, frame_depth, mask=mask)
+                        dist_ = np.nansum(frame_depth_)/((frame_depth_!=0.).sum())
+                        if np.isnan(dist_):
+                            dist.append('?')
+                        else:
+                            dist.append(np.round(dist_/1000., 3))
+                                                
+                        frame_humans += frame_depth_
+
+
+                    params_o3d.set_intrinsics(width=frame.shape[1], 
+                                             height=frame.shape[0],
+                                             fx=params_camera.fx, 
+                                             fy=params_camera.fy, 
+                                             cx=params_camera.cx,
+                                             cy=params_camera.cy)
+                    vis.clear_geometries()
+                    rgb_o3d = o3d.geometry.Image(frame)
+                    depth_o3d = o3d.geometry.Image(frame_humans.astype(np.float32))
+                    rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(rgb_o3d, depth_o3d, convert_rgb_to_intensity=False)
+                    pcl = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, params_o3d)
+                    vis.add_geometry(pcl)
+                    vis.poll_events()
+                    vis.update_renderer()
                     t0 = time.time()
+
+
 
                 
 
@@ -136,6 +183,7 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
             # Stop capturing.
             device.stop()
             device.close()
+            vis.destroy_window()
         if use_popup:
             cv2.destroyAllWindows()
         return video_frames

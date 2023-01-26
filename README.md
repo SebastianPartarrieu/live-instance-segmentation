@@ -13,6 +13,10 @@ Depending on what your use case is, there are different installation options ava
 System specifications:
 Install [openvino_notebooks](https://github.com/openvinotoolkit/openvino_notebooks/wiki/Conda#step-4-install-the-packages) by following the linked instructions.
 
+If you intend to process the Kinectv2 data flow, you will need to install specific libraries (CAREFUL, the installation guide provided below works only with Linux):
+- libfreenect2 : follow the instructions here : https://github.com/OpenKinect/libfreenect2
+- freenect2-python : python wrapper for libfreenect2, allows a more pythonic way of processing the kinect v2 frames. See https://rjw57.github.io/freenect2-python/.
+
 ### Repository structure
 ```
 .
