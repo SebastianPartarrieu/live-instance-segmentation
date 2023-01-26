@@ -20,6 +20,15 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
 
     vis = o3d.visualization.Visualizer()
     vis.create_window(height=480, width=640)
+    ctr = vis.get_view_control()
+    # current_fov = ctr.get_field_of_view()
+    # print(f"Field of view before adjusting = {current_fov}")
+    # ctr.change_field_of_view(step=-current_fov+90)
+    # print(f"Field of view after adjusting = {ctr.get_field_of_view()}")
+    # ctr.rotate(-1, -1)
+    # ctr.set_zoom(10)
+    # ctr.camera_local_translate(forward=100., right=0., up=0.) 
+    #                 
     
     try:
         device = Device()
@@ -177,6 +186,8 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
                     pcls.append(pcl)
 
                     t0 = time.time()
+
+                   
 
 
     # ctrl-c

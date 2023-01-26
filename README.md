@@ -13,7 +13,7 @@ Depending on what your use case is, there are different installation options ava
 
 Install [openvino_notebooks](https://github.com/openvinotoolkit/openvino_notebooks/wiki/Conda#step-4-install-the-packages) by following the linked instructions. It will be easier to follow the rest if you create a conda environment as explained and install the correct packages using requirement_openvino.txt file.
 
-If you intend to process the Kinectv2 data flow, you will need to install specific libraries (CAREFUL, the installation guide provided below works only with Linux):
+If you intend to process the Kinectv2 data flow, you will need to install specific libraries (CAREFUL, the installation guide provided below works only with Linux in our experience):
 - libfreenect2 : follow the instructions here : https://github.com/OpenKinect/libfreenect2
 - freenect2-python : python wrapper for libfreenect2, allows a more pythonic way of processing the kinect v2 frames. See https://rjw57.github.io/freenect2-python/.
 > Careful: for the freenect2-python installation, you don't need to reinstall libfreenect2, you just need to activate your favorite conda environment, set the system environment variable and then install the python wrapper.
@@ -33,7 +33,12 @@ def __call__(self, frame_type, frame):
         _ = self.get()
     self.queue.put_nowait((frame_type, frame))
 ```
-This should ensure you don't get a segmentation fault.
+This should ensure you don't get a segmentation fault. You can set the dynamic max queue size as you wish as long as it is under the max_queue_size define in the __init__ function of the class.
+
+Finally, you will need the latest version of open3d. One way to install it is with pip :
+```
+pip install open3d>=0.16*
+```
 
 ### Repository structure
 ```
