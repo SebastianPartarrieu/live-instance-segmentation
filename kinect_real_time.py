@@ -149,6 +149,7 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
                             dist.append(np.round(dist_/1000., 3))
                                                 
                         frame_humans += frame_depth_
+                    
 
 
                     params_o3d.set_intrinsics(width=frame.shape[1], 
