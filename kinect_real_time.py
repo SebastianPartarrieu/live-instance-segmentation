@@ -104,7 +104,7 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
                     lineType=cv2.LINE_AA,
                 )
                 
-                video_frames.append(frame)
+                #video_frames.append(frame)
 
                 # Use this workaround if there is flickering.
                 if use_popup:
@@ -177,7 +177,7 @@ def run_object_detection(source=0, flip=False, use_popup=False, skip_first_frame
 
                     vis.poll_events()
                     vis.update_renderer()
-                    pcls.append(pcl)
+                    #pcls.append(pcl)
 
                     t0 = time.time()
 
@@ -239,12 +239,12 @@ classes = [
 video_frames, pcls = run_object_detection(source=0, flip=True, use_popup=True)
 
 ## save video
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-out = cv2.VideoWriter('./videos/kinect_realtime_demo_3.mp4', fourcc, 10, (video_frames[0].shape[1], video_frames[0].shape[0]))
-for i in range(len(video_frames)):
-    out.write(video_frames[i])
-out.release()
+# fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+# out = cv2.VideoWriter('./videos/kinect_realtime_demo_3.mp4', fourcc, 10, (video_frames[0].shape[1], video_frames[0].shape[0]))
+# for i in range(len(video_frames)):
+#     out.write(video_frames[i])
+# out.release()
 
 ## save pointclouds
-for i, pcl in enumerate(pcls):
-    o3d.io.write_point_cloud(f'./pointclouds3/frame{i}.pcd', pcl)
+# for i, pcl in enumerate(pcls):
+#     o3d.io.write_point_cloud(f'./pointclouds3/frame{i}.pcd', pcl)
