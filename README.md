@@ -1,6 +1,7 @@
 # Kinect live processing for industrial safety applications &middot; [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/SebastianPartarrieu/live-kinect/blob/master/LICENSE)
 To help the industrial adoption of low-cost sensors for safety applications, this repository provides a proof-of-concept of person segmentation with depth estimation and point cloud rendering using the Kinect v2 sensor.
 
+
 The Kinect v2 provides RGB + IR information: we use the RGB to perform live person segmentation using either (i) the best performing models available on hugging face to benchmark or (ii) openvino lightweight implementations that can run on an intel CPU. Once the segmentation masks are acquired we can use these to extract the humans from the Kinect depth maps and then estimate the distance of each human to the sensor. Finally, after the depth estimation, we can render 3D point clouds of each visible human. This workflow could then be fed downstream to a navigating robot using the input data to update its trajectory.
 
 > Disclaimer: There are both experimental and more mature scripts within the repository.
@@ -44,6 +45,8 @@ pip install open3d>=0.16*
 ```
 .
 ├── docs
+|   ├── Mareva mini-projet 2022-2023 slideshow.pdf
+|   ├── Mareva mini-projet.pdf
 ├── models
 |   ├── model-segmentation
 |      ├── instance-segmentation-person-0007
@@ -53,33 +56,42 @@ pip install open3d>=0.16*
 |          └── FP32
 |             ├── instance-segmentation-person-0007.bin
 |             └── instance-segmentation-person-0007.xml
-├── code
+├── kinect_real_time.py
+├── utils.py
+├── point_cloud_to_video.py
+├── live-segmentation-cpu.ipynb
+├── swit-vit-segmentation-webcam.ipynb
 ```
+
+### Details about files
+
+- Mareva mini-projet 2022-2023 slideshow.pdf & Mareva mini-projet.pdf: details of the initial project ambitions, from Petr DOKLADAL who supervised the project.
+
+- kinect_real_time.py : get real time data from Kinect v2 sensor, apply human instance segmentation framework (Openvino librairy), render human segmentation on the RGB frame, coupled with the distance between the camera and each human (evaluated with the depth channel). 3D point clouds are also rendered in real time, with only the segmented humans in them.
+
+- utils.py : helper functions to process each RGB frame (apply model, calculate distances, show bounding boxes with confidence score on the detection).
+
+- point_cloud_to_video.py : generate video based on .pcd files, saved after running kinect_real_time. With this script, you can retrieve the point cloud visualization that was not saved during real time processing (although shown on screen).
+
+- live-segmentation-cpu.ipynb: notebook to use the openvino instance segmentation model on data coming from the webcam.
+
+- swit-vit-segmentation-webcam.ipynb: notebook using swin vision transformers for instance segmentation on prerecorded RGB-D images as well as streamed data using the webcam.
 
 ### System requirements
 - OS: elementary OS 5.1.7 Hera x86_64 (anything based on Ubuntu > 14.04 should work fine)
 - CPU: Intel i5-9300H (8) @ 4.100GHz (as long as its Intel, you're good!)
 - python 3.8 (see package requirements file)
 
-### Details about files
-
-- kinect_real_time.py : get real time data from Kinect v2 sensor, apply human instance segmentation framework (Openvino librairy), render human segmentation on the RGB frame, coupled with the distance between the camera and each human (evaluated with the depth channel). 3D point clouds are also rendered in real time, with only the segmented humans in them.
-
-- utils.py : helper functions to process each RGB frame (apply model, calculate distances, show bounding boxes with confidence score on the detection)
-
-- point_cloud_to_video.py : generate video based on .pcd files, saved after running kinect_real_time. With this script, you can retrieve the point cloud visualization that was not saved during real time processing (although shown on screen)
-
 ## Developing
 
-### Built with
+### Future directions
+A number of future directions can be considered for this project.
+- Adding better postprocessing to the pointclouds
+- Continue optimizing the tradeoff between real-time rendering and accuracy in person segmentation
+- Feed the pointclouds to an 'autonomous' robot or industrial application using the input data
 
-
-### Prerequisites
-If anything extra is needed to set up the dev environment.
-
-
-### Configuration
-What to change and where to change it.
+### Configuration - What to change and where to change it
+If you want to run this on your own kinect and make improvements, you will mainly want to work on the ```kinect_real_time.py script```. The code should be fairly self explanatory, however it does use lots of functions from opencv and open3d, so make sure you go through some of their tutorials to have an in-depth understanding of how we are using their functions here. If you want to save the visualizations, make sure to uncomment the code at the end of the script, future changes to this repository will make this more configurable.
 
 ## Authors
 Emma Bou Hanna & Sebastian Partarrieu
