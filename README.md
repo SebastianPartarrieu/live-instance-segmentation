@@ -6,7 +6,7 @@ https://user-images.githubusercontent.com/55084624/215078439-82810ded-6bb9-43dc-
 
 The Kinect v2 provides RGB + IR information: we use the RGB to perform live person segmentation using either (i) the best performing models available on hugging face to benchmark or (ii) openvino lightweight implementations that can run on an intel CPU. Once the segmentation masks are acquired we can use these to extract the humans from the Kinect depth maps and then estimate the distance of each human to the sensor. Finally, after the depth estimation, we can render 3D point clouds of each visible human. This workflow could then be fed downstream to a navigating robot using the input data to update its trajectory.
 
-https://user-images.githubusercontent.com/55084624/215079171-40dea1dc-72bd-4b30-b671-e7c432957ad9.mp4
+https://user-images.githubusercontent.com/55084624/215080689-f444a3ae-8608-4735-b339-d7237377b5af.mp4
 
 > Disclaimer: There are both experimental and more mature scripts within the repository.
 
