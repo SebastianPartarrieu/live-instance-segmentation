@@ -61,6 +61,14 @@ pip install open3d>=0.16*
 - CPU: Intel i5-9300H (8) @ 4.100GHz (as long as its Intel, you're good!)
 - python 3.8 (see package requirements file)
 
+### Details about files
+
+- kinect_real_time.py : get real time data from Kinect v2 sensor, apply human instance segmentation framework (Openvino librairy), render human segmentation on the RGB frame, coupled with the distance between the camera and each human (evaluated with the depth channel). 3D point clouds are also rendered in real time, with only the segmented humans in them.
+
+- utils.py : helper functions to process each RGB frame (apply model, calculate distances, show bounding boxes with confidence score on the detection)
+
+- point_cloud_to_video.py : generate video based on .pcd files, saved after running kinect_real_time. With this script, you can retrieve the point cloud visualization that was not saved during real time processing (although shown on screen)
+
 ## Developing
 
 ### Built with
